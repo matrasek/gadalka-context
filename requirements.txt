@@ -1,0 +1,4 @@
+uvicorn
+fastapi
+mem0ai
+sentence-transformers
