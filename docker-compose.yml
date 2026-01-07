@@ -54,7 +54,7 @@ services:
     # restart: unless-stopped
 
   redpanda:
-    image: docker.redpanda.com/redpanda/redpanda:latest
+    image: redpandadata/redpanda:latest
     command:
       - redpanda
       - start
