@@ -64,22 +64,30 @@ class Responser:
 
         if self.chat_client is None:
             return ''
+
         chat_id = self._chat_id(chat_id, bot_id)
+
         search_t0 = perf_counter()
         recent_dialog = self._load_recent_dialog(chat_id)
         memory_context = self._search_memory_context(request_text, chat_id)
         search_t1 = perf_counter()
 
-        messages = self._build_messages(request_text, natal_chart, recent_dialog, memory_context)
-        logger.debug(f'Request messages: {messages}')
+        messages = self._build_messages(
+            request_text=request_text,
+            natal_chart=natal_chart,
+            recent_dialog=recent_dialog,
+            memory_context=memory_context,
+        )
 
-        response_content = self._chat_completion(messages)
-        if response_content is None:
+        logger.debug("Request messages: %s", messages)
+
+        response_content = self._responses_completion(messages)
+        if not response_content:
             return ''
 
         dialog_pair = [
-            {'role': 'user', 'content': request_text},
-            {'role': 'assistant', 'content': response_content},
+            {"role": "user", "content": request_text},
+            {"role": "assistant", "content": response_content},
         ]
 
         save_t0 = perf_counter()
@@ -87,7 +95,7 @@ class Responser:
         save_t1 = perf_counter()
 
         logger.info(
-            'Timings: search=%.2f sec, chat+save=%.2f sec',
+            "Timings: search=%.2f sec, chat+save=%.2f sec",
             search_t1 - search_t0,
             save_t1 - search_t1,
         )
@@ -138,8 +146,9 @@ class Responser:
         recent_dialog: List[Dict[str, str]],
         memory_context: str,
     ) -> List[Dict[str, str]]:
+
         messages: List[Dict[str, str]] = [
-            {"role": "system", "content": SYSTEM_PROMPT.strip()}
+            {"role": "developer", "content": SYSTEM_PROMPT.strip()}
         ]
 
         if recent_dialog:
@@ -147,8 +156,7 @@ class Responser:
 
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        blocks = []
-        blocks.append(f"CURRENT_TIME:\n{current_time}")
+        blocks = [f"CURRENT_TIME:\n{current_time}"]
 
         if memory_context:
             blocks.append(
@@ -177,27 +185,28 @@ class Responser:
 
         return messages
 
-    def _chat_completion(self, messages: list[Dict[str, str]]) -> str | None:
+
+    def _responses_completion(self, messages: List[Dict[str, str]]) -> str | None:
         try:
-            response_t0 = perf_counter()
-            response = self.chat_client.chat.completions.create(
-                model=self.cfg.CHAT_LLM.config['llm']['config']['model'],
-                messages=messages,
+            response = self.chat_client.responses.create(
+                model=self.cfg.CHAT_LLM.config["llm"]["config"]["model"],
+                input=messages,
                 temperature=self.cfg.CHAT_LLM.chat_llm_temperature,
-                max_tokens=self.cfg.CHAT_LLM.chat_llm_max_tokens,
+                max_output_tokens=self.cfg.CHAT_LLM.chat_llm_max_tokens,
                 top_p=self.cfg.CHAT_LLM.chat_llm_top_p,
                 presence_penalty=self.cfg.CHAT_LLM.chat_llm_presence_penalty,
                 frequency_penalty=self.cfg.CHAT_LLM.chat_llm_frequency_penalty,
             )
-            logger.info(response)
-            response_content = response.choices[0].message.content
-            response_t1 = perf_counter()
-            logger.info(response_content)
-            logger.info('Chat time: %.2f sec', response_t1 - response_t0)
-            return response_content
-        except Exception as chat_err:
-            logger.error(f'Failed to get response from OpenAI: {chat_err}', exc_info=True)
+
+            logger.debug("Raw response: %s", response)
+
+            # Самый безопасный и короткий путь
+            return response.output_text
+
+        except Exception as err:
+            logger.error("Responses API failed: %s", err, exc_info=True)
             return None
+
 
     def _persist_memory(
         self,
