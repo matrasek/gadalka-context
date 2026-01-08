@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 
 FORMAT = '%(asctime)s|%(levelname)s|%(filename)s|  %(message)s'
@@ -15,7 +16,7 @@ def _get_file_handler():
     return file_handler
 
 def _get_stream_handler():
-    stream_handler = logging.StreamHandler()
+    stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setLevel(logging.DEBUG)
     stream_handler.setFormatter(logging.Formatter(FORMAT))
     return stream_handler
