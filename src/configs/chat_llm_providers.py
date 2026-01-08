@@ -61,8 +61,10 @@ class ChatOpenaiLLMProvider:
         self.chat_llm_openai_model = os.environ.get('CHAT_LLM_OPENAI_MODEL', 'gpt-4.1-nano-2025-04-14')
         
         self.chat_llm_temperature = float(str(os.environ.get('CHAT_LLM_TEMPERATURE', 0.2)))
-        self.chat_llm_max_tokens = int(str(os.environ.get('CHAT_LLM_MAX_TOKENS', 2000)))
+        self.chat_llm_max_tokens = int(str(os.environ.get('CHAT_LLM_MAX_TOKENS', 800)))
         self.chat_llm_top_p = float(str(os.environ.get('CHAT_LLM_TOP_P', 1.0)))
+        self.chat_llm_presence_penalty = float(str(os.environ.get('CHAT_LLM_PRESENCE_PENALTY', 0.0)))
+        self.chat_llm_frequency_penalty = float(str(os.environ.get('CHAT_LLM_FREQUENCY_PENALTY', 0.1)))
         
         self.config['llm']['config']['model'] = self.chat_llm_openai_model        
         self.config['llm']['config']['temperature'] = float(self.chat_llm_temperature)

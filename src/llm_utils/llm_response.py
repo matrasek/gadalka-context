@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from time import perf_counter
 import os
 from datetime import datetime
@@ -135,29 +135,46 @@ class Responser:
         self,
         request_text: str,
         natal_chart: str,
-        recent_dialog: list[Dict[str, str]],
+        recent_dialog: List[Dict[str, str]],
         memory_context: str,
-    ) -> list[Dict[str, str]]:
-        messages: list[Dict[str, str]] = [{'role': 'system', 'content': SYSTEM_PROMPT}]
+    ) -> List[Dict[str, str]]:
+        messages: List[Dict[str, str]] = [
+            {"role": "system", "content": SYSTEM_PROMPT.strip()}
+        ]
+
         if recent_dialog:
             messages.extend(recent_dialog)
+
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        blocks = []
+        blocks.append(f"CURRENT_TIME:\n{current_time}")
+
         if memory_context:
-            messages.append(
-                {
-                    'role': 'system',
-                    'content': f'--- CONTEXT START ---\n{memory_context}\n--- CONTEXT END ---',
-                }
+            blocks.append(
+                "MEMORY_CONTEXT (secondary, may be imperfect):\n"
+                "----\n"
+                f"{memory_context}\n"
+                "----"
             )
+
         if natal_chart:
-            messages.append(
-                {
-                    'role': 'system',
-                    'content': f'--- NATAL CHART START ---\n{natal_chart}\n--- NATAL CHART END ---',
-                }
+            blocks.append(
+                "NATAL_CHART (primary source of facts):\n"
+                "----\n"
+                f"{natal_chart}\n"
+                "----"
             )
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        messages.append({'role': 'system', 'content': f'Current time: {current_time}'})
-        messages.append({'role': 'user', 'content': request_text})
+
+        blocks.append(
+            "USER_REQUEST:\n"
+            "----\n"
+            f"{request_text}\n"
+            "----"
+        )
+
+        messages.append({"role": "user", "content": "\n\n".join(blocks)})
+
         return messages
 
     def _chat_completion(self, messages: list[Dict[str, str]]) -> str | None:
@@ -166,6 +183,11 @@ class Responser:
             response = self.chat_client.chat.completions.create(
                 model=self.cfg.CHAT_LLM.config['llm']['config']['model'],
                 messages=messages,
+                temperature=self.cfg.CHAT_LLM.chat_llm_temperature,
+                max_tokens=self.cfg.CHAT_LLM.chat_llm_max_tokens,
+                top_p=self.cfg.CHAT_LLM.chat_llm_top_p,
+                presence_penalty=self.cfg.CHAT_LLM.chat_llm_presence_penalty,
+                frequency_penalty=self.cfg.CHAT_LLM.chat_llm_frequency_penalty,
             )
             logger.info(response)
             response_content = response.choices[0].message.content
@@ -307,6 +329,7 @@ class Responser:
             from openai import OpenAI  # type: ignore
             chat_client = OpenAI(
                 api_key=self.cfg.CHAT_LLM.chat_llm_api_key,
+                
             )
             return chat_client
         

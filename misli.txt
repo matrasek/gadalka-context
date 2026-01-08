@@ -1,0 +1,6 @@
+### 1 
+CHAT_LLM_OPENAI_MODEL (gpt-4.1-nano-2025-04-14 -> gpt-5-mini)
+MEMORY_LLM_OPENAI_MODEL (gpt-4.1-nano-2025-04-14 -> gpt-5-nano)
+MEMORY_LLM_RERANKER_MODEL (gpt-4.1-nano-2025-04-14 -> gpt-5-nano)
+
+После изменения очень долгий респонс от гпт. И долгий респонс от араха, походу сеть прям жестко загрузилась
