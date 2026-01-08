@@ -1,7 +1,7 @@
 from typing import Dict, Any
 from time import perf_counter
 import os
-
+from datetime import datetime
 from mem0 import Memory  # type: ignore
 
 from log.logger import get_logger
@@ -155,6 +155,8 @@ class Responser:
                     'content': f'--- NATAL CHART START ---\n{natal_chart}\n--- NATAL CHART END ---',
                 }
             )
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        messages.append({'role': 'system', 'content': f'Current time: {current_time}'})
         messages.append({'role': 'user', 'content': request_text})
         return messages
 
