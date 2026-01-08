@@ -194,8 +194,6 @@ class Responser:
                 temperature=self.cfg.CHAT_LLM.chat_llm_temperature,
                 max_output_tokens=self.cfg.CHAT_LLM.chat_llm_max_tokens,
                 top_p=self.cfg.CHAT_LLM.chat_llm_top_p,
-                presence_penalty=self.cfg.CHAT_LLM.chat_llm_presence_penalty,
-                frequency_penalty=self.cfg.CHAT_LLM.chat_llm_frequency_penalty,
             )
 
             logger.debug("Raw response: %s", response)
