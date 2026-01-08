@@ -19,6 +19,7 @@ class KafkaProducerInput:
 class KafkaMsgProducer:
     def __init__(self, cfg: CFGKafka) -> None:
         self.cfg = cfg
+        logger.info('Preparing Kafka producer connection')
         producer_kwargs = {
             'bootstrap_servers': cfg.BOOTSTRAP_SERVERS,
             'batch_size': cfg.KAFKA_BATCH_SIZE,
@@ -27,6 +28,7 @@ class KafkaMsgProducer:
         producer_kwargs.update(cfg.auth_kwargs())
 
         self.producer = KafkaProducer(**producer_kwargs)
+        logger.info('Kafka producer connected to %s and topic %s', cfg.BOOTSTRAP_SERVERS, cfg.OUTPUT_TOPIC)
         return None
 
     def send(self, msg: KafkaProducerInput) -> None:

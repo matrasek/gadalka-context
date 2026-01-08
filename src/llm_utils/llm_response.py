@@ -18,6 +18,7 @@ logger = get_logger(__name__)
 class Responser:
     def __init__(self, cfg: Config):
         self.cfg = cfg
+        logger.info('Initializing Responser with chat and memory backends')
         # Устанавливаем фиктивный OPENAI_API_KEY, если он не установлен или пустой
         # Это нужно, так как mem0 требует api_key для OpenAI-совместимого клиента, даже для локального TEI
         # Фиктивный ключ не будет использоваться, так как запросы идут на локальный TEI сервер через base_url
@@ -40,6 +41,7 @@ class Responser:
         self.default_user_id = os.environ.get('MEMORY_DEFAULT_USER_ID', 'default')
         self.default_session_id = os.environ.get('MEMORY_DEFAULT_SESSION_ID', 'default_session')
         self.chat_client = self._define_chat_client()
+        logger.info('Chat client initialized using provider %s', type(self.cfg.CHAT_LLM).__name__)
         self.redis_memory = RedisMemory(
             url=self.cfg.REDIS.url,
             host=self.cfg.REDIS.host,
@@ -49,6 +51,7 @@ class Responser:
             password=self.cfg.REDIS.password,
             window_size=self.cfg.REDIS.window_size,
         )
+        logger.info('RedisMemory client prepared for host=%s db=%s', self.cfg.REDIS.host, self.cfg.REDIS.db)
         
         
     def get_response(self, msg: KafkaConsumerOutput) -> str | None:

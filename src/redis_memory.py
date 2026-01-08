@@ -36,12 +36,14 @@ class RedisMemory:
     def _get_client(self) -> redis.Redis:
         if self._client is None:
             if self.url:
+                logger.info('Connecting to Redis via URL %s', self.url)
                 self._client = redis.from_url(
                     self.url,
                     db=self.db,
                     decode_responses=True,
                 )
             else:
+                logger.info('Connecting to Redis host=%s port=%s db=%s', self.host, self.port, self.db)
                 self._client = redis.Redis(
                     host=self.host,
                     port=self.port,

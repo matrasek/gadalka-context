@@ -37,11 +37,13 @@ def _process_message(responser: Responser, orchestrator: Orchestrator) -> None:
 
 def main() -> None:
     try:
+        logger.info('Kafka worker starting')
         cfg = Config()
         kafka_cfg = CFGKafka()
 
         responser = Responser(cfg)
         orchestrator = Orchestrator(cfg=kafka_cfg)
+        logger.info('Kafka worker initialized: consumer and producer ready')
     except Exception as exc:
         logger.error('Failed to initialize: %s', exc, exc_info=True)
         raise exc

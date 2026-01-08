@@ -31,7 +31,9 @@ class Orchestrator:
     def __init__(self, cfg: CFGKafka):
         self.cfg = cfg
         self.cfg.log_summary()
+        logger.info('Initializing Kafka consumer')
         self.consumer = KafkaMsgConsumer(cfg=self.cfg)
+        logger.info('Initializing Kafka producer')
         self.producer = KafkaMsgProducer(cfg=self.cfg)
         self.killer = GracefulKiller()
 
@@ -41,7 +43,9 @@ class Orchestrator:
         self.queue = self.consumer.get_msg_queue()
         self.consumer.start()
         self.stopped = False
+        logger.info('Waiting for Kafka consumer to start')
         self._wait_until_consumer_starts()
+        logger.info('Kafka consumer startup confirmed')
         return None
 
     def _wait_until_consumer_starts(self, timeout: float = 10.):
@@ -67,7 +71,7 @@ class Orchestrator:
                 try:
                     msg: KafkaConsumerOutput = self.queue.get(timeout=5.)
                 except Empty:
-                    logger.info('Pending images')
+                    logger.info('Pending messages')
                     if batch:
                         break
                     continue

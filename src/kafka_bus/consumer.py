@@ -58,7 +58,8 @@ class KafkaMsgConsumer(multiprocessing.Process):
         return self.started.is_set()
 
     def run(self) -> NoReturn:
-        logger.info('Connecting to Kafka')
+        logger.info('Starting Kafka consumer process')
+        logger.info('Connecting to Kafka for topic pattern %s', self.cfg.INPUT_TOPIC)
         try:
             consumer_kwargs = {
                 'bootstrap_servers': self.cfg.BOOTSTRAP_SERVERS,
