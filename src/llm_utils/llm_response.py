@@ -158,19 +158,19 @@ class Responser:
 
         blocks = [f"CURRENT_TIME:\n{current_time}"]
 
-        if memory_context:
-            blocks.append(
-                "MEMORY_CONTEXT (secondary, may be imperfect):\n"
-                "----\n"
-                f"{memory_context}\n"
-                "----"
-            )
-
         if natal_chart:
             blocks.append(
                 "NATAL_CHART (primary source of facts):\n"
                 "----\n"
                 f"{natal_chart}\n"
+                "----"
+            )
+
+        if memory_context:
+            blocks.append(
+                "MEMORY_CONTEXT (secondary, may be imperfect):\n"
+                "----\n"
+                f"{memory_context}\n"
                 "----"
             )
 

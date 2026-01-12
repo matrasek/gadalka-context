@@ -126,11 +126,13 @@ class KafkaMsgConsumer(multiprocessing.Process):
 
         request_text = payload.get('request_text')
         natal_chart = payload.get('natal_chart')
+        logger.debug(f'natal_chart: {type(natal_chart)} {natal_chart}')
         if natal_chart is None:
             natal_chart = ''
             logger.warning('natal_chart is not provided in kafka payload.')
         if not isinstance(natal_chart, str):
             natal_chart = str(natal_chart)
+        logger.debug(f'natal_chart after: {type(natal_chart)} {natal_chart}')
         if request_text is None:
             raise KeyError('request_text is required in kafka payload.')
         if not isinstance(request_text, str):
