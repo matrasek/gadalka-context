@@ -168,7 +168,9 @@ class Responser:
         # а контекст (время/наталка/память) — отдельными system-сообщениями.
         # Так модели проще корректно реагировать на короткие "давай/ок/продолжай".
 
-        messages: List[Dict[str, str]] = [{'role': 'system', 'content': SYSTEM_PROMPT.strip()}]
+        messages: List[Dict[str, str]] = []
+        if SYSTEM_PROMPT:
+            messages.append({'role': 'system', 'content': SYSTEM_PROMPT.strip()})
 
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         messages.append({'role': 'system', 'content': f'CURRENT_TIME:\n{current_time}'})
