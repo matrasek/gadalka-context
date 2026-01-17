@@ -56,52 +56,68 @@ class Responser:
         
         
     def get_response(self, msg: KafkaConsumerOutput) -> str | None:
+        try:
+            request_text: str = msg.request_text
+            request_id: str = msg.request_id
+            bot_id: str = msg.bot_id
+            chat_id: str = msg.chat_id
+            natal_chart: str = msg.natal_chart
 
-        request_text: str = msg.request_text
-        request_id: str = msg.request_id
-        bot_id: str = msg.bot_id
-        chat_id: str = msg.chat_id
-        natal_chart: str = msg.natal_chart
+            if self.chat_client is None:
+                return ''
 
-        if self.chat_client is None:
+            chat_id = self._chat_id(chat_id, bot_id)
+
+            search_t0 = perf_counter()
+            recent_dialog = self._load_recent_dialog(chat_id)
+            memory_context = self._search_memory_context(request_text, chat_id)
+            try:
+                current_planet_position = self._get_current_planet_position()
+            except Exception as redis_err:
+                logger.warning('Redis current planet position fetch failed: %s', redis_err, exc_info=True)
+                current_planet_position = ''
+            search_t1 = perf_counter()
+
+            messages = self._build_messages(
+                request_text=request_text,
+                natal_chart=natal_chart,
+                recent_dialog=recent_dialog,
+                memory_context=memory_context,
+                current_planet_position=current_planet_position,
+            )
+
+            logger.debug("Request messages: %s", messages)
+
+            response_content = self._responses_completion(messages)
+            if not response_content:
+                return ''
+
+            dialog_pair = [
+                {"role": "user", "content": request_text},
+                {"role": "assistant", "content": response_content},
+            ]
+
+            save_t0 = perf_counter()
+            self._persist_memory(dialog_pair, chat_id)
+            save_t1 = perf_counter()
+
+            logger.info(
+                "Timings: search=%.2f sec, chat+save=%.2f sec",
+                search_t1 - search_t0,
+                save_t1 - search_t1,
+            )
+
+            return response_content
+        except Exception as err:
+            logger.error('Error in get_response: %s', err, exc_info=True)
+            return 'Наелась и сплю, попробуй позже'
+    
+    def _get_current_planet_position(self) -> str:
+        try:
+            return self.redis_memory.get_current_planet_position()
+        except Exception as redis_err:
+            logger.warning('Redis current planet position fetch failed: %s', redis_err, exc_info=True)
             return ''
-
-        chat_id = self._chat_id(chat_id, bot_id)
-
-        search_t0 = perf_counter()
-        recent_dialog = self._load_recent_dialog(chat_id)
-        memory_context = self._search_memory_context(request_text, chat_id)
-        search_t1 = perf_counter()
-
-        messages = self._build_messages(
-            request_text=request_text,
-            natal_chart=natal_chart,
-            recent_dialog=recent_dialog,
-            memory_context=memory_context,
-        )
-
-        logger.debug("Request messages: %s", messages)
-
-        response_content = self._responses_completion(messages)
-        if not response_content:
-            return ''
-
-        dialog_pair = [
-            {"role": "user", "content": request_text},
-            {"role": "assistant", "content": response_content},
-        ]
-
-        save_t0 = perf_counter()
-        self._persist_memory(dialog_pair, chat_id)
-        save_t1 = perf_counter()
-
-        logger.info(
-            "Timings: search=%.2f sec, chat+save=%.2f sec",
-            search_t1 - search_t0,
-            save_t1 - search_t1,
-        )
-
-        return response_content
 
     def _load_recent_dialog(self, chat_id: str) -> list[Dict[str, str]]:
         try:
@@ -146,6 +162,7 @@ class Responser:
         natal_chart: str,
         recent_dialog: List[Dict[str, str]],
         memory_context: str,
+        current_planet_position: str,
     ) -> List[Dict[str, str]]:
         # ВАЖНО: делаем "чистый" последний user-message (только запрос пользователя),
         # а контекст (время/наталка/память) — отдельными system-сообщениями.
@@ -169,7 +186,18 @@ class Responser:
                     ),
                 }
             )
-
+        if current_planet_position:
+            messages.append(
+                {
+                    'role': 'system',
+                    'content': (
+                        'CURRENT_PLANET_POSITION:\n'
+                        '----\n'
+                        f'{current_planet_position}\n'
+                        '----'
+                    ),
+                }
+            )
         if memory_context:
             messages.append(
                 {
